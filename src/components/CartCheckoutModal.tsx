@@ -14,6 +14,7 @@ import {
   Banknote,
   Copy,
   Check,
+  AlertCircle,
 } from 'lucide-react';
 import {
   Product,
@@ -24,6 +25,7 @@ import {
   calculateProgressivePricing,
 } from '../data/products';
 import { ProductVisual } from './ProductVisual';
+import { validateOrderForm, FormErrors } from '../utils/validation';
 
 export interface CartItem {
   product: Product;
@@ -71,6 +73,8 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
   React.useEffect(() => {
     if (isOpen) {
       setStep(initialMode === 'checkout' && cart.length > 0 ? 'checkout' : 'cart');
+      setFormError('');
+      setFieldErrors({});
     }
   }, [isOpen, initialMode, cart.length]);
 
@@ -84,6 +88,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
     'Pay on Delivery' | 'Bank Transfer' | 'Online Payment'
   >('Pay on Delivery');
   const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<OrderRecord | null>(null);
   const [copiedId, setCopiedId] = useState(false);
@@ -105,10 +110,29 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !phone.trim() || !address.trim()) {
-      setFormError('Please provide your Full Name, Phone Number, and Delivery Address.');
+
+    // Strict Phone Number & Delivery Detail Validation
+    const validation = validateOrderForm({
+      fullName,
+      phone,
+      whatsapp,
+      address,
+      state,
+    });
+
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      setFormError(
+        validation.errors.phone ||
+        validation.errors.fullName ||
+        validation.errors.address ||
+        validation.errors.state ||
+        'Please correct the highlighted fields before submitting.'
+      );
       return;
     }
+
+    setFieldErrors({});
     setFormError('');
     setIsSubmitting(true);
 
@@ -282,28 +306,28 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                   </p>
                   <p>
                     <strong className="text-slate-900">Contact Phone:</strong>{' '}
-                    {confirmedOrder.phone} (WhatsApp: {confirmedOrder.whatsapp})
+                    {confirmedOrder.phone}
                   </p>
                 </div>
               </div>
 
-              {/* Direct WhatsApp Fast-Track Link */}
+              {/* Dispatch Information & Continue Shopping */}
               <div className="space-y-3">
-                <a
-                  href={getOrderWhatsAppUrl(confirmedOrder)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-sm font-bold transition-colors shadow-lg"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Send Order Receipt to WhatsApp</span>
-                </a>
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-[#071A2F] font-medium text-center space-y-1">
+                  <p className="font-bold text-[#0070BA]">
+                    📦 Dispatch Logistics Notice
+                  </p>
+                  <p>
+                    Our delivery rider will call your phone number (<strong className="font-mono-num font-bold text-slate-900">{confirmedOrder.phone}</strong>) prior to arrival. Please keep your line reachable!
+                  </p>
+                </div>
+
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full py-3 px-5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                  className="w-full py-3.5 px-5 rounded-xl bg-[#071A2F] text-white text-xs font-black uppercase tracking-wider hover:bg-[#0B2545] transition-colors cursor-pointer shadow-md"
                 >
-                  Continue Shopping
+                  Done / Continue Shopping
                 </button>
               </div>
             </div>
@@ -316,7 +340,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                 Your shopping bag is empty
               </h3>
               <p className="text-sm text-slate-500 max-w-xs mt-1 mb-6">
-                Discover the GOODLUXE Smart Double Gas Cooker with Digital Timer &amp; Blue Turbo Flame.
+                Discover the 2-BURNER SMART TIMER GAS COOKER with Digital Timer &amp; Blue Turbo Flame.
               </p>
               <button
                 type="button"
@@ -433,19 +457,21 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                     </span>
                     <div className="flex items-center gap-2 shrink-0">
                       <label className="sr-only">Quantity</label>
-                      <div className="inline-flex items-center border border-slate-300 rounded bg-white">
+                      <div className="inline-flex items-center border border-slate-300 rounded-lg bg-white shadow-xs">
                         <button
                           type="button"
                           onClick={() => onUpdateQuantity(product.id, quantity - 1)}
-                          className="px-1.5 py-0.5 text-slate-500 hover:text-slate-900 cursor-pointer"
+                          className="w-7 h-7 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 cursor-pointer font-bold"
+                          aria-label="Decrease quantity"
                         >
                           -
                         </button>
-                        <span className="px-2 font-mono-num font-semibold text-slate-900">{quantity}</span>
+                        <span className="w-8 text-center font-mono-num font-black text-xs text-slate-900">{quantity}</span>
                         <button
                           type="button"
                           onClick={() => onUpdateQuantity(product.id, quantity + 1)}
-                          className="px-1.5 py-0.5 text-slate-500 hover:text-slate-900 cursor-pointer"
+                          className="w-7 h-7 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 cursor-pointer font-bold"
+                          aria-label="Increase quantity"
                         >
                           +
                         </button>
@@ -461,8 +487,9 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               </div>
 
               {formError && (
-                <div className="p-3 rounded-lg bg-red-50 border border-red-300 text-xs text-red-700 font-medium">
-                  {formError}
+                <div className="p-3 rounded-lg bg-red-50 border-2 border-red-300 text-xs text-red-800 font-bold flex items-start gap-2 shadow-xs">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
                 </div>
               )}
 
@@ -493,59 +520,78 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* Customer Delivery Fields */}
-              <div className="space-y-3.5 text-[#0A1C36]">
+              {/* Customer Delivery Fields (Moderate, Comfortable Input Boxes) */}
+              <div className="space-y-3 text-[#0A1C36]">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Full Name *
+                    Full Name (First &amp; Last Name) *
                   </label>
                   <input
                     type="text"
                     required
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Chinedu Okafor"
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      if (fieldErrors.fullName) setFieldErrors((p) => ({ ...p, fullName: undefined }));
+                    }}
+                    placeholder="e.g. Emmanuel Collins"
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                      fieldErrors.fullName
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
                   />
+                  {fieldErrors.fullName && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.fullName}</span>
+                    </p>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="e.g. 0803 123 4567"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      WhatsApp Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={whatsapp}
-                      onChange={(e) => setWhatsapp(e.target.value)}
-                      placeholder="e.g. 0803 123 4567"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Phone Number (11 Digits) *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+                    }}
+                    placeholder="e.g. 0803 123 4567"
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                      fieldErrors.phone
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
+                  />
+                  {fieldErrors.phone && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.phone}</span>
+                    </p>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                   <div className="sm:col-span-1">
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       State *
                     </label>
                     <select
                       value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 text-sm focus:outline-none focus:border-[#E51A24]"
+                      onChange={(e) => {
+                        setState(e.target.value);
+                        if (fieldErrors.state) setFieldErrors((p) => ({ ...p, state: undefined }));
+                      }}
+                      className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 text-sm focus:outline-none ${
+                        fieldErrors.state
+                          ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                          : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                      }`}
                     >
                       {NIGERIAN_STATES.map((st) => (
                         <option key={st} value={st} className="bg-white text-slate-900">
@@ -553,19 +599,38 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                         </option>
                       ))}
                     </select>
+                    {fieldErrors.state && (
+                      <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{fieldErrors.state}</span>
+                      </p>
+                    )}
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Full Delivery Address *
+                      Detailed Delivery Address *
                     </label>
                     <input
                       type="text"
                       required
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="House No, Street, Estate / Landmark, City"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
+                      onChange={(e) => {
+                        setAddress(e.target.value);
+                        if (fieldErrors.address) setFieldErrors((p) => ({ ...p, address: undefined }));
+                      }}
+                      placeholder="House No, Street Name, Estate or Bus-stop"
+                      className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                        fieldErrors.address
+                          ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                          : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                      }`}
                     />
+                    {fieldErrors.address && (
+                      <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{fieldErrors.address}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -573,12 +638,12 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Order Notes / Delivery Instructions (Optional)
                   </label>
-                  <textarea
-                    rows={2}
+                  <input
+                    type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Preferred delivery day, gate pass code, or color preference..."
-                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
+                    className="w-full px-3 py-2 sm:py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:border-[#E51A24]"
                   />
                 </div>
               </div>
@@ -612,7 +677,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep('checkout')}
-                className="w-full py-4 px-6 rounded-xl bg-[#E51A24] hover:bg-[#C9131C] text-white text-sm font-black tracking-wide transition-all duration-200 cursor-pointer shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+                className="w-full py-4 px-6 rounded-xl bg-[#E51A24] hover:bg-[#C9131C] text-white text-sm sm:text-base font-black tracking-wide uppercase transition-all duration-200 cursor-pointer shadow-xl shadow-red-500/25 border-2 border-[#FFE500] animate-action-blink"
               >
                 PROCEED TO QUICK CHECKOUT
               </button>
@@ -621,7 +686,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                 type="submit"
                 form="quick-checkout-form"
                 disabled={isSubmitting}
-                className="w-full py-4 px-6 rounded-xl bg-[#E51A24] hover:bg-[#C9131C] disabled:opacity-60 text-white text-sm font-black tracking-wide transition-all duration-200 cursor-pointer shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+                className="w-full py-4 px-6 rounded-xl bg-[#E51A24] hover:bg-[#C9131C] disabled:opacity-60 text-white text-sm sm:text-base font-black tracking-wide uppercase transition-all duration-200 cursor-pointer shadow-xl shadow-red-500/25 border-2 border-[#FFE500] animate-action-blink"
               >
                 {isSubmitting
                   ? 'SUBMITTING ORDER...'

@@ -1,64 +1,61 @@
 import React, { useState } from 'react';
-import { Product } from '../data/products';
+import { Flame, Sparkles, Package, Zap } from 'lucide-react';
 
-interface ProductVisualProps {
-  visualType: Product['visualType'];
-  angle?: string;
+export interface ProductVisualProps {
+  visualType?: string;
   customImageUrl?: string;
-  alt: string;
+  alt?: string;
   className?: string;
-  interactive?: boolean;
 }
 
 export const ProductVisual: React.FC<ProductVisualProps> = ({
-  angle = 'studio-front',
+  visualType,
   customImageUrl,
-  alt,
+  alt = 'GOODLUXE Luxury Cooktop',
   className = '',
 }) => {
-  const [imgError, setImgError] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  const isUrlOrPath = (val?: string) =>
-    Boolean(
-      val &&
-        (val.startsWith('/') ||
-          val.startsWith('http://') ||
-          val.startsWith('https://') ||
-          val.startsWith('data:'))
-    );
-
-  const resolvedSrc = isUrlOrPath(customImageUrl)
-    ? customImageUrl
-    : isUrlOrPath(angle)
-    ? angle
-    : '/images/products/Hbe3f00ba76fa4641848c12908d0d7637q.jpg';
-
-  if (resolvedSrc && !imgError) {
+  if (customImageUrl && !hasError) {
     return (
-      <div className={`relative overflow-hidden bg-white flex items-center justify-center ${className}`}>
+      <div className={`relative flex items-center justify-center overflow-hidden bg-white ${className}`}>
         <img
-          src={resolvedSrc}
+          src={customImageUrl}
           alt={alt}
-          referrerPolicy="no-referrer"
-          onError={() => setImgError(true)}
-          className="w-full h-full object-contain"
+          onError={() => setHasError(true)}
+          className="w-full h-full object-contain transition-transform duration-300"
+          loading="lazy"
         />
       </div>
     );
   }
 
+  // Graceful fallback visual if image fails to load or customImageUrl is not provided
   return (
     <div
-      className={`relative overflow-hidden bg-white flex items-center justify-center ${className}`}
-      role="img"
-      aria-label={alt}
+      className={`relative flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-[#071A2F] to-slate-800 text-white p-4 ${className}`}
     >
-      <img
-        src="/images/products/Hbe3f00ba76fa4641848c12908d0d7637q.jpg"
-        alt={alt}
-        referrerPolicy="no-referrer"
-        className="w-full h-full object-contain"
-      />
+      <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#FFE500_1px,transparent_1px)] [background-size:12px_12px]" />
+      
+      <div className="relative z-10 flex flex-col items-center text-center">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#E51A24] to-[#FFE500] p-0.5 flex items-center justify-center shadow-lg mb-2">
+          <div className="w-full h-full bg-[#071A2F] rounded-[10px] flex items-center justify-center">
+            {visualType?.includes('sink') ? (
+              <Sparkles className="w-6 h-6 text-[#FFE500]" />
+            ) : visualType?.includes('lock') ? (
+              <Zap className="w-6 h-6 text-[#FFE500]" />
+            ) : (
+              <Flame className="w-6 h-6 text-[#FFE500]" />
+            )}
+          </div>
+        </div>
+        <span className="text-[11px] font-black uppercase tracking-wider text-slate-200">
+          GOODLUXE
+        </span>
+        <span className="text-[9px] font-bold text-[#FFE500] uppercase tracking-widest mt-0.5">
+          Premium Cooktop
+        </span>
+      </div>
     </div>
   );
 };

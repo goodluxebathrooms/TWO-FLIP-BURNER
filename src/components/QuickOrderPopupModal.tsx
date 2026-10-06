@@ -11,6 +11,7 @@ import {
   Check,
   ShieldCheck,
   Truck,
+  AlertCircle,
 } from 'lucide-react';
 import {
   Product,
@@ -21,6 +22,7 @@ import {
   calculateProgressivePricing,
 } from '../data/products';
 import { OrderRecord } from './CartCheckoutModal';
+import { validateOrderForm, FormErrors } from '../utils/validation';
 
 interface QuickOrderPopupModalProps {
   isOpen: boolean;
@@ -46,6 +48,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<OrderRecord | null>(null);
   const [copiedId, setCopiedId] = useState(false);
@@ -53,6 +56,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setFormError('');
+      setFieldErrors({});
     }
   }, [isOpen]);
 
@@ -62,10 +66,29 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !phone.trim() || !address.trim()) {
-      setFormError('Please enter your Full Name, Phone Number, and Delivery Address.');
+
+    // Strict Phone Number & Delivery Detail Validation
+    const validation = validateOrderForm({
+      fullName,
+      phone,
+      whatsapp,
+      address,
+      state,
+    });
+
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      setFormError(
+        validation.errors.phone ||
+        validation.errors.fullName ||
+        validation.errors.address ||
+        validation.errors.state ||
+        'Please correct the highlighted fields before submitting.'
+      );
       return;
     }
+
+    setFieldErrors({});
     setFormError('');
     setIsSubmitting(true);
 
@@ -139,37 +162,39 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-xl bg-white text-[#0A1C36] rounded-3xl shadow-2xl border-2 border-[#0070BA]/30 overflow-hidden my-auto max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-md bg-white text-[#0A1C36] rounded-2xl shadow-2xl border border-[#0070BA]/30 overflow-hidden my-auto max-h-[94vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Pop-Up Header (Flyer Deep Royal Midnight Navy + Fire Red + Sunburst Yellow) */}
-        <div className="bg-[#071A2F] text-white px-5 py-4 flex items-center justify-between gap-3 shrink-0 shadow-md border-b-2 border-[#FFE500]">
-          <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-full bg-[#FFE500] text-[#071A2F] flex items-center justify-center shrink-0 shadow-sm font-black">
-              <Zap className="w-4 h-4 fill-[#071A2F]" />
+        {/* Pop-Up Header (Compact) */}
+        <div className="bg-[#071A2F] text-white px-3.5 py-2.5 flex items-center justify-between gap-2 shrink-0 shadow-sm border-b-2 border-[#FFE500]">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-[#FFE500] text-[#071A2F] flex items-center justify-center shrink-0 shadow-xs font-black">
+              <Zap className="w-3.5 h-3.5 fill-[#071A2F]" />
             </span>
             <div>
-              <span className="inline-block bg-[#E51A24] text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded shadow-xs">
-                PROMO FLASH ORDER
-              </span>
-              <h3 className="text-base sm:text-lg font-display font-bold leading-tight mt-0.5 text-white">
-                Quick Pay-on-Delivery Order
-              </h3>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block bg-[#E51A24] text-white text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded">
+                  FLASH SALE
+                </span>
+                <h3 className="text-xs sm:text-sm font-display font-bold leading-tight text-white">
+                  Quick Pay-on-Delivery Order
+                </h3>
+              </div>
             </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
+            className="p-1 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
             aria-label="Close popup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 bg-white">
+        <div className="p-3 sm:p-4 overflow-y-auto space-y-2.5 flex-1 bg-white">
           {confirmedOrder ? (
             <div className="space-y-5 py-2">
               <div className="p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-500/50 text-center space-y-2">
@@ -225,25 +250,25 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-2.5">
-                <a
-                  href={getWhatsAppReceiptUrl(confirmedOrder)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-sm font-bold transition-colors shadow-lg"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Send Order Receipt on WhatsApp</span>
-                </a>
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-[#071A2F] font-medium text-center space-y-1">
+                  <p className="font-bold text-[#0070BA]">
+                    📦 Dispatch Logistics Notification
+                  </p>
+                  <p>
+                    Our delivery rider will call your phone number (<strong className="font-mono-num font-bold text-slate-900">{confirmedOrder.phone}</strong>) prior to arrival. Please keep your line available.
+                  </p>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
                     setConfirmedOrder(null);
                     onClose();
                   }}
-                  className="w-full py-3 px-4 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-[#071A2F] text-white text-xs font-black uppercase tracking-wider hover:bg-[#0B2545] transition-colors cursor-pointer shadow-md"
                 >
-                  Done
+                  Done / Continue Browsing
                 </button>
               </div>
             </div>
@@ -253,67 +278,60 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
               action={FORMSPREE_ENDPOINT}
               method="POST"
               onSubmit={handleSubmit}
-              className="space-y-4"
+              className="space-y-2"
             >
               <input type="hidden" name="productName" value={product.name} />
               <input type="hidden" name="quantity" value={quantity} />
               <input type="hidden" name="totalPayable" value={formatNaira(pricing.finalTotal)} />
               <input type="hidden" name="paymentMethod" value="Pay on Delivery" />
 
-              {/* Product & Quantity Summary */}
-              <div className="p-3.5 rounded-2xl bg-[#071A2F] text-white border border-[#0070BA]/50 space-y-3 shadow-md">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
+              {/* BIGGER UNIT & QUANTITY SELECTOR SECTION */}
+              <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-b from-[#0B2545] to-[#071A2F] text-white border-2 border-[#0070BA]/60 shadow-md space-y-2">
+                {/* Product Name & Large Quantity Stepper */}
+                <div className="flex items-center justify-between gap-2.5 pb-2 border-b border-white/15">
+                  <div className="flex items-center gap-2 min-w-0">
                     <img
                       src={product.images[0]}
                       alt={product.name}
                       referrerPolicy="no-referrer"
-                      className="w-14 h-14 rounded-xl object-contain bg-white border border-slate-200 p-1 shrink-0"
+                      className="w-10 h-10 rounded-lg object-contain bg-white border border-slate-200 p-0.5 shrink-0"
                     />
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white line-clamp-1">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#FFE500] block">
+                        Select Units
+                      </span>
+                      <h4 className="text-xs sm:text-sm font-black text-white leading-tight">
                         {product.name}
                       </h4>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                        <span className="text-base font-black font-mono-num text-[#FFE500]">
-                          {formatNaira(pricing.finalTotal)}
-                        </span>
-                        <span className="text-[11px] font-mono-num font-semibold text-slate-300">
-                          ({formatNaira(pricing.unitPrice)}/unit)
-                        </span>
-                        {pricing.progressiveDiscount > 0 && (
-                          <span className="text-[10px] bg-[#FFE500] text-[#071A2F] font-mono-num font-black px-1.5 py-0.5 rounded">
-                            SAVE {formatNaira(pricing.progressiveDiscount)}
-                          </span>
-                        )}
-                      </div>
                     </div>
                   </div>
 
-                  {/* Stepper */}
-                  <div className="inline-flex items-center border border-white/30 rounded-lg bg-black/40 shrink-0">
+                  {/* Large Stepper */}
+                  <div className="inline-flex items-center border-2 border-white/40 rounded-lg bg-black/50 shadow-inner shrink-0">
                     <button
                       type="button"
                       onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-                      className="p-1.5 text-slate-200 hover:text-white hover:bg-white/10 cursor-pointer"
+                      className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-200 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer rounded-l-md"
+                      aria-label="Decrease quantity"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="w-8 text-center font-mono-num font-bold text-xs text-white">
+                    <span className="w-8 sm:w-9 text-center font-mono-num font-black text-sm sm:text-base text-[#FFE500]">
                       {quantity}
                     </span>
                     <button
                       type="button"
                       onClick={() => onQuantityChange(Math.min(20, quantity + 1))}
-                      className="p-1.5 text-slate-200 hover:text-white hover:bg-white/10 cursor-pointer"
+                      className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-200 hover:text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer rounded-r-md"
+                      aria-label="Increase quantity"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Quick Progressive Discount Bundle Pills */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* Big Unit Selection Cards (1 Unit, 2 Units, 3 Units) */}
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {[1, 2, 3].map((tierQty) => {
                     const tierPricing = calculateProgressivePricing(product.currentPrice, tierQty);
                     const isSelected = quantity === tierQty;
@@ -322,28 +340,38 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                         key={tierQty}
                         type="button"
                         onClick={() => onQuantityChange(tierQty)}
-                        className={`p-2 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                        className={`p-1.5 sm:p-2 rounded-lg border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-between min-h-[56px] sm:min-h-[62px] ${
                           isSelected
-                            ? 'border-[#FFE500] bg-white/15 shadow-md ring-2 ring-[#FFE500]'
-                            : 'border-white/20 bg-black/30 hover:border-[#0070BA]'
+                            ? 'border-[#FFE500] bg-white text-[#071A2F] shadow-lg ring-2 ring-[#FFE500]'
+                            : 'border-white/30 bg-white/10 hover:bg-white/20 text-white'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="text-[11px] font-extrabold text-white">
+                        <div className="flex items-center justify-between w-full">
+                          <span className={`text-[11px] sm:text-xs font-black uppercase ${isSelected ? 'text-[#071A2F]' : 'text-white'}`}>
                             {tierQty} {tierQty === 1 ? 'Unit' : 'Units'}
                           </span>
-                          <span className="text-[9px] font-black bg-[#FFE500] text-[#071A2F] px-1 py-0.2 rounded font-mono-num">
-                            {tierQty === 1
-                              ? 'BASE'
-                              : `-${formatNaira(tierPricing.discountPerUnit)}/ea`}
+                          <span className={`text-[8px] sm:text-[9px] font-black px-1 py-0.2 rounded font-mono-num ${
+                            isSelected
+                              ? 'bg-[#E51A24] text-white'
+                              : 'bg-[#FFE500] text-[#071A2F]'
+                          }`}>
+                            {tierQty === 1 ? 'BASE' : tierQty === 2 ? '-₦10k' : '-₦30k'}
                           </span>
                         </div>
-                        <p className="text-xs font-black font-mono-num text-[#FFE500] mt-0.5">
-                          {formatNaira(tierPricing.unitPrice)}/unit
-                        </p>
-                        <p className="text-[10px] font-semibold font-mono-num text-slate-300">
-                          Total: {formatNaira(tierPricing.finalTotal)}
-                        </p>
+                        <div className="mt-0.5 sm:mt-1 text-right w-full">
+                          <p className={`text-xs sm:text-sm font-black font-mono-num leading-tight ${
+                            isSelected ? 'text-[#E51A24]' : 'text-[#FFE500]'
+                          }`}>
+                            {formatNaira(tierPricing.finalTotal)}
+                          </p>
+                          {tierQty > 1 && (
+                            <p className={`text-[8px] sm:text-[9px] font-mono-num ${
+                              isSelected ? 'text-slate-600' : 'text-slate-300'
+                            }`}>
+                              {formatNaira(tierPricing.unitPrice)}/ea
+                            </p>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
@@ -351,33 +379,32 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
               </div>
 
               {formError && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-300 text-xs text-red-700 font-medium">
-                  {formError}
+                <div className="p-2 rounded-md bg-red-50 border border-red-300 text-xs text-red-800 font-bold flex items-start gap-1.5 shadow-xs">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
                 </div>
               )}
 
-              {/* Payment Mode — Pay on Delivery Only */}
-              <div className="flex items-center justify-between p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50">
-                <div className="flex items-center gap-2.5">
+              {/* Payment Mode — Pay on Delivery (Moderate) */}
+              <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-emerald-500 bg-emerald-50/80">
+                <div className="flex items-center gap-2">
                   <input
                     type="radio"
                     name="popupPayment"
                     checked
                     readOnly
-                    className="accent-emerald-600"
+                    className="accent-emerald-600 w-3.5 h-3.5"
                   />
-                  <div>
-                    <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                      Pay on Delivery (Inspect Before Paying)
-                    </span>
-                  </div>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900">
+                    Pay on Delivery (Inspect before payment)
+                  </span>
                 </div>
                 <Banknote className="w-4 h-4 text-emerald-600 shrink-0" />
               </div>
 
-              {/* Customer Delivery Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#0A1C36]">
-                <div className="sm:col-span-2">
+              {/* Customer Delivery Inputs — Moderate Balanced Boxes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-[#0A1C36]">
+                <div className="sm:col-span-1">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Full Name *
                   </label>
@@ -386,50 +413,69 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                     name="fullName"
                     required
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Chinedu Okafor"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      if (fieldErrors.fullName) setFieldErrors((p) => ({ ...p, fullName: undefined }));
+                    }}
+                    placeholder="e.g. Emmanuel Collins"
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                      fieldErrors.fullName
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
                   />
+                  {fieldErrors.fullName && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.fullName}</span>
+                    </p>
+                  )}
                 </div>
 
-                <div>
+                <div className="sm:col-span-1">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Phone Number *
+                    Phone Number (11 Digits) *
                   </label>
                   <input
                     type="tel"
                     name="phone"
                     required
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+                    }}
                     placeholder="e.g. 0803 123 4567"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                      fieldErrors.phone
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
                   />
+                  {fieldErrors.phone && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.phone}</span>
+                    </p>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    WhatsApp Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="whatsapp"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    placeholder="e.g. 0803 123 4567"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
-                  />
-                </div>
-
-                <div>
+                <div className="sm:col-span-1">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     State *
                   </label>
                   <select
                     name="state"
                     value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-[#F8FAFC] text-slate-900 text-sm focus:outline-none focus:border-[#E51A24]"
+                    onChange={(e) => {
+                      setState(e.target.value);
+                      if (fieldErrors.state) setFieldErrors((p) => ({ ...p, state: undefined }));
+                    }}
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 text-sm focus:outline-none ${
+                      fieldErrors.state
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
                   >
                     {NIGERIAN_STATES.map((st) => (
                       <option key={st} value={st} className="bg-white text-slate-900">
@@ -437,9 +483,15 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.state && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.state}</span>
+                    </p>
+                  )}
                 </div>
 
-                <div>
+                <div className="sm:col-span-1">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Delivery Address *
                   </label>
@@ -448,10 +500,23 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                     name="deliveryAddress"
                     required
                     value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="House No, Street, Landmark, City"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
+                    onChange={(e) => {
+                      setAddress(e.target.value);
+                      if (fieldErrors.address) setFieldErrors((p) => ({ ...p, address: undefined }));
+                    }}
+                    placeholder="House No, Street, Bus-stop"
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                      fieldErrors.address
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
                   />
+                  {fieldErrors.address && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.address}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
@@ -464,7 +529,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Preferred delivery time or landmark..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-[#E51A24] focus:ring-1 focus:ring-[#E51A24]"
+                    className="w-full px-3 py-2 sm:py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:border-[#E51A24]"
                   />
                 </div>
               </div>
@@ -472,11 +537,16 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 px-6 rounded-xl bg-[#E51A24] hover:bg-[#C9131C] disabled:opacity-60 text-white text-sm sm:text-base font-black tracking-wide transition-all duration-200 cursor-pointer shadow-xl shadow-red-500/20 hover:shadow-red-500/40 hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full py-3 px-5 rounded-xl bg-[#E51A24] hover:bg-[#C9131C] disabled:opacity-60 text-white text-sm sm:text-base font-black tracking-wide uppercase transition-all duration-200 cursor-pointer shadow-lg shadow-red-500/25 border-2 border-[#FFE500] animate-action-blink flex items-center justify-center gap-2"
               >
-                {isSubmitting
-                  ? 'SUBMITTING YOUR ORDER...'
-                  : `PLACE ORDER — ${formatNaira(pricing.finalTotal)} (PAY ON DELIVERY)`}
+                {isSubmitting ? (
+                  'SUBMITTING YOUR ORDER...'
+                ) : (
+                  <>
+                    <Zap className="w-3.5 h-3.5 text-[#FFE500] fill-[#FFE500] shrink-0" />
+                    <span>PLACE ORDER — {formatNaira(pricing.finalTotal)} (PAY ON DELIVERY)</span>
+                  </>
+                )}
               </button>
 
               <div className="flex items-center justify-center gap-4 text-[11px] text-slate-500 pt-1">

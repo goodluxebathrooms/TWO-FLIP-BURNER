@@ -95,7 +95,8 @@ export const NIGERIAN_STATES = [
 ];
 
 export const WHATSAPP_PHONE = '2349031585177';
-export const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xbglvrry';
+export const FORMSPREE_FORM_ID = 'xbglvrry';
+export const FORMSPREE_ENDPOINT = `https://formspree.io/f/${FORMSPREE_FORM_ID}`;
 
 export const PROGRESSIVE_DISCOUNT_STEP = 5000;
 
@@ -128,12 +129,12 @@ export const formatNaira = (amount: number): string => {
 
 export const SINGLE_PRODUCT: Product = {
   id: 'glx-smart-cooker-01',
-  name: 'GOODLUXE Smart Digital Tempered Glass Gas Hob',
+  name: '2-BURNER SMART TIMER GAS COOKER',
   category: 'Kitchen',
   shortDescription:
-    'Dual-burner tempered glass smart gas hob with 99-minute digital timer, full battery level indicator, effortless single-wipe cleaning, and multi-ring blue turbo jet flame.',
+    'Dual-burner tempered glass smart gas cooker with 99-minute digital timer, full battery level indicator, effortless single-wipe cleaning, and multi-ring blue turbo jet flame.',
   description:
-    'Upgrade your kitchen with the GOODLUXE Smart Digital Tempered Glass Gas Hob. Engineered for modern Nigerian homes, it pairs intense multi-ring direct blue jet flames with an intelligent digital control interface featuring a programmable timer display, full battery level readout, and an 8mm explosion-proof black glass surface that wipes spotless in a single pass.',
+    'Upgrade your kitchen with the 2-BURNER SMART TIMER GAS COOKER. Engineered for modern Nigerian homes, it pairs intense multi-ring direct blue jet flames with an intelligent digital control interface featuring a programmable timer display, full battery level readout, and an 8mm explosion-proof black glass surface that wipes spotless in a single pass.',
   visualType: 'smart-sink',
   images: [
     '/images/products/Hbe3f00ba76fa4641848c12908d0d7637q.jpg',
@@ -170,7 +171,7 @@ export const SINGLE_PRODUCT: Product = {
     { label: 'Warranty', value: '12 Months Official GOODLUXE Nigeria Warranty' },
   ],
   whatsIncluded: [
-    '1 × GOODLUXE Smart Digital Dual-Burner Tempered Glass Gas Hob',
+    '1 × 2-BURNER SMART TIMER GAS COOKER',
     '2 × Heavy-Duty Windproof Cast-Iron Pan Supports',
     '2 × Detachable Multi-Ring Turbo Burner Assemblies',
     '4 × Non-Slip Tabletop Support Feet & Countertop Sponge Seal Strip',
@@ -265,8 +266,49 @@ export const FAQS = [
       'Every GOODLUXE Smart Digital Gas Hob is backed by our 7-Day Easy Replacement Guarantee and a 12-Month Official Warranty covering the tempered glass, ignition module, and digital control interface.',
   },
   {
-    question: 'Can I order directly through WhatsApp?',
+    question: 'How does Pay on Delivery work?',
     answer:
-      'Yes! Click any "Order on WhatsApp" button on this page to send your pre-filled order directly to our fulfillment desk for immediate dispatch.',
+      'Fill in the Quick Order Form with your delivery address. Our logistics dispatch team delivers right to your doorstep anywhere in Nigeria. You inspect your package before making payment via cash or POS/bank transfer.',
+  },
+];
+
+export const MAIN_PRODUCT = SINGLE_PRODUCT;
+export const TWO_BURNER_PRODUCT = SINGLE_PRODUCT;
+export const STORE_PHONE = WHATSAPP_PHONE;
+export const calculateWholesalePrice = (quantity: number) => {
+  return calculateProgressivePricing(SINGLE_PRODUCT.currentPrice, quantity);
+};
+
+export const SOCIAL_PROOF_ORDERS = [
+  { name: 'Engr. Emeka K.', units: '2 Units (₦10,000 Saved)', location: 'Lekki Phase 1, Lagos', timeAgo: '3 mins ago' },
+  { name: 'Mrs. Folashade A.', units: '1 Unit', location: 'Maitama, Abuja', timeAgo: '7 mins ago' },
+  { name: 'Dr. Obinna O.', units: '3 Units (₦30,000 Saved)', location: 'GRA Phase 2, Port Harcourt', timeAgo: '14 mins ago' },
+  { name: 'Alhaji Musa D.', units: '1 Unit', location: 'Nasarawa, Kano', timeAgo: '22 mins ago' },
+];
+
+export const DESCRIPTION_CARDS = [
+  {
+    title: 'Intense Blue Turbo Jet Flames',
+    description: 'Direct multi-ring flame nozzles deliver maximum thermal efficiency without blackening pots or wasting cooking gas.',
+  },
+  {
+    title: 'Smart Digital LED Timer',
+    description: 'Set cooking timers up to 99 minutes with automatic alert and battery status display.',
+  },
+  {
+    title: '8mm Explosion-Proof Tempered Glass',
+    description: 'Heavy-duty heat-resistant safety glass rated for pots up to 60kg and thermal shock resistant.',
+  },
+  {
+    title: 'Single-Wipe Effortless Cleaning',
+    description: 'Detachable burner rings and smooth seamless black tempered glass wipe spotless in seconds.',
+  },
+  {
+    title: 'Dual Countertop & Built-In Placement',
+    description: 'Use instantly as a tabletop cooker with non-slip rubber feet, or drop into marble counter slab.',
+  },
+  {
+    title: 'Instant Electronic Piezo Ignition',
+    description: 'Fast, smooth 1-second pulse ignition powered by internal battery cell. No matches or lighters needed.',
   },
 ];
