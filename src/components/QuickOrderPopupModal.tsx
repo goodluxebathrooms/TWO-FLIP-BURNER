@@ -177,7 +177,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                   FLASH SALE
                 </span>
                 <h3 className="text-xs sm:text-sm font-display font-bold leading-tight text-white">
-                  Quick Pay-on-Delivery Order
+                  GOODLUXE Quick Pay-on-Delivery
                 </h3>
               </div>
             </div>

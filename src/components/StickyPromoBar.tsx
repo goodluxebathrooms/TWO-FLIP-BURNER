@@ -95,6 +95,7 @@ export const StickyPromoBar: React.FC<StickyPromoBarProps> = ({
             🔥
           </span>
           <span className="text-[11px] sm:text-xs md:text-[13px] font-black uppercase tracking-wider text-white">
+            <span className="text-[#FFE500] font-black mr-1">GOODLUXE</span>
             7-DAY PROMOTIONAL OFFER — FREE DELIVERY &amp; 12 MONTHS WARRANTY
           </span>
         </div>

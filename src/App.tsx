@@ -257,11 +257,45 @@ export default function App() {
     }
   };
 
-  // Cart & Buy Actions
+  // Cart & Buy Actions Tracking (Meta Pixel & TikTok Pixel)
   const trackPixelEvent = (eventName: string, params?: Record<string, unknown>) => {
-    const win = window as unknown as { fbq?: (...args: unknown[]) => void };
+    const win = window as unknown as {
+      fbq?: (...args: unknown[]) => void;
+      ttq?: { track?: (event: string, data?: Record<string, unknown>) => void };
+    };
+
+    // Meta (Facebook) Pixel
     if (typeof win.fbq === 'function') {
       win.fbq('track', eventName, params);
+    }
+
+    // TikTok Pixel
+    if (win.ttq && typeof win.ttq.track === 'function') {
+      const ttEventMap: Record<string, string> = {
+        AddToCart: 'AddToCart',
+        InitiateCheckout: 'InitiateCheckout',
+        Purchase: 'PlaceAnOrder',
+        ViewContent: 'ViewContent',
+      };
+      const ttEvent = ttEventMap[eventName] || eventName;
+      win.ttq.track(ttEvent, {
+        contents: [
+          {
+            content_id: product.id,
+            content_name: product.name,
+            quantity: params?.num_items || quantity,
+            price: product.currentPrice,
+          },
+        ],
+        value: params?.value,
+        currency: (params?.currency as string) || 'NGN',
+      });
+      if (eventName === 'Purchase') {
+        win.ttq.track('CompletePayment', {
+          value: params?.value,
+          currency: (params?.currency as string) || 'NGN',
+        });
+      }
     }
   };
 
@@ -447,7 +481,7 @@ export default function App() {
         {/* 2. COMPACT STICKY NAVIGATION / HEADER (Immediately below promotional bar) */}
         <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-12 sm:h-14 flex items-center justify-between gap-2 sm:gap-4">
-            {/* Left: Product/store logo or icon + Text: "2-BURNER \n SMART TIMER \n GAS COOKER" */}
+            {/* Left: Store logo or icon + Business Name: GOODLUXE + Product Name */}
             <a
               href="#product-top"
               onClick={(e) => {
@@ -455,25 +489,22 @@ export default function App() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className="flex items-center gap-1.5 sm:gap-2.5 group cursor-pointer shrink-0"
-              aria-label="2-BURNER SMART TIMER GAS COOKER"
+              aria-label="GOODLUXE — 2-BURNER SMART TIMER GAS COOKER"
             >
               {/* Product/store logo or icon */}
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-br from-[#0B2545] to-[#123663] text-white flex items-center justify-center shadow-xs border border-[#0070BA]/40 shrink-0 group-hover:scale-105 transition-transform">
                 <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFE500] fill-[#FFE500]" />
               </div>
 
-              {/* Text:
-                  "2-BURNER
-                   SMART TIMER
-                   GAS COOKER" */}
+              {/* Business Name (GOODLUXE) + Product Name */}
               <div className="flex flex-col leading-none">
-                <span className="font-black text-[9.5px] sm:text-[11px] tracking-wider text-[#0B2545] uppercase">
-                  2-BURNER
+                <span className="font-black font-display text-[11px] sm:text-[13px] tracking-wider text-[#0B2545] uppercase">
+                  GOODLUXE
                 </span>
-                <span className="font-black text-[11px] sm:text-[13px] tracking-wide text-[#E51A24] uppercase my-0.5">
-                  SMART TIMER
+                <span className="font-black text-[9px] sm:text-[10.5px] tracking-wide text-[#E51A24] uppercase my-0.5">
+                  2-BURNER SMART TIMER
                 </span>
-                <span className="font-black text-[8.5px] sm:text-[10px] tracking-wider text-slate-700 uppercase">
+                <span className="font-black text-[8px] sm:text-[9.5px] tracking-wider text-slate-700 uppercase">
                   GAS COOKER
                 </span>
               </div>
@@ -1244,7 +1275,7 @@ export default function App() {
             <div className="bg-[#0B2545] text-white px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-4 border-[#E51A24]">
               <div>
                 <span className="inline-block bg-[#E51A24] text-white text-[11px] sm:text-xs uppercase tracking-widest font-black px-3 py-0.5 rounded shadow-sm">
-                  PAY ON DELIVERY CHECKOUT
+                  GOODLUXE • PAY ON DELIVERY CHECKOUT
                 </span>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold mt-1 text-white">
                   Fill In Your Delivery Details Below
