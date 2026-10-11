@@ -178,9 +178,9 @@ export const SINGLE_PRODUCT: Product = {
     '1 × Brass LPG Hose Connector, Clamp & User Manual',
   ],
   deliveryInfo:
-    'FREE Same-Day / Next-Day delivery in Lagos & Abuja. 2–4 working days nationwide delivery to Port Harcourt, Ibadan, Enugu, Benin, Kano, Warri, Uyo, Owerri, and all 36 states via insured express courier.',
+    'Choose between FREE Motor Park Pick-up across Nigeria or convenient Doorstep Delivery (+₦5,000) straight to your house or office address. Same-Day or Next-Day in Lagos & Abuja; 2–4 working days nationwide via insured express transport.',
   paymentInfo:
-    '100% Pay on Delivery — You only pay upon receiving and inspecting your order at your doorstep (via POS or Instant Transfer to the delivery agent).',
+    '100% Pay on Delivery — You only pay upon receiving and inspecting your order at your pickup park or doorstep (via POS or Instant Transfer to the delivery agent).',
   reviews: [],
 };
 
@@ -233,7 +233,7 @@ export const FAQS = [
   {
     question: 'Do you deliver nationwide across Nigeria?',
     answer:
-      'Yes! We offer FREE nationwide delivery to all 36 states in Nigeria and FCT Abuja. Orders in Lagos and Abuja are delivered Same-Day or Next-Day. Deliveries to Port Harcourt, Ibadan, Benin, Enugu, Kano, Warri, Uyo, Owerri, and other states take 2 to 4 working days.',
+      'Yes! We deliver across all 36 states and FCT Abuja. You can select either Motor Park Pick-up (FREE) to collect at your nearest interstate park with zero delivery charge, or Doorstep Delivery (+₦5,000) for direct courier delivery straight to your residential or office address.',
   },
   {
     question: 'Is Pay on Delivery available?',
@@ -312,3 +312,260 @@ export const DESCRIPTION_CARDS = [
     description: 'Fast, smooth 1-second pulse ignition powered by internal battery cell. No matches or lighters needed.',
   },
 ];
+
+export interface DeliveryStateConfig {
+  methodName: string;
+  summaryLabel: string;
+  fee: number;
+  displayFee: string;
+}
+
+export const STATE_DELIVERY_PRICING: Record<string, DeliveryStateConfig> = {
+  Lagos: {
+    methodName: 'Direct Doorstep Delivery (Lagos)',
+    summaryLabel: 'Delivery (Lagos Doorstep)',
+    fee: 0,
+    displayFee: 'FREE',
+  },
+  'FCT - Abuja': {
+    methodName: 'Doorstep Delivery (Abuja)',
+    summaryLabel: 'Delivery (Abuja Doorstep)',
+    fee: 4000,
+    displayFee: '₦4,000',
+  },
+  Abuja: {
+    methodName: 'Doorstep Delivery (Abuja)',
+    summaryLabel: 'Delivery (Abuja Doorstep)',
+    fee: 4000,
+    displayFee: '₦4,000',
+  },
+  'Rivers (Port Harcourt)': {
+    methodName: 'Doorstep Delivery (Port Harcourt)',
+    summaryLabel: 'Delivery (Port Harcourt Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Ogun (Abeokuta)': {
+    methodName: 'Doorstep Delivery (Ogun)',
+    summaryLabel: 'Delivery (Ogun Doorstep)',
+    fee: 3500,
+    displayFee: '₦3,500',
+  },
+  'Oyo (Ibadan)': {
+    methodName: 'Doorstep Delivery (Ibadan)',
+    summaryLabel: 'Delivery (Ibadan Doorstep)',
+    fee: 4000,
+    displayFee: '₦4,000',
+  },
+  Kano: {
+    methodName: 'Doorstep Delivery (Kano)',
+    summaryLabel: 'Delivery (Kano Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Delta (Asaba / Warri)': {
+    methodName: 'Doorstep Delivery (Delta)',
+    summaryLabel: 'Delivery (Delta Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Edo (Benin City)': {
+    methodName: 'Doorstep Delivery (Edo)',
+    summaryLabel: 'Delivery (Edo Doorstep)',
+    fee: 4500,
+    displayFee: '₦4,500',
+  },
+  Enugu: {
+    methodName: 'Doorstep Delivery (Enugu)',
+    summaryLabel: 'Delivery (Enugu Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Anambra (Awka / Onitsha)': {
+    methodName: 'Doorstep Delivery (Anambra)',
+    summaryLabel: 'Delivery (Anambra Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  Kaduna: {
+    methodName: 'Doorstep Delivery (Kaduna)',
+    summaryLabel: 'Delivery (Kaduna Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Akwa Ibom (Uyo)': {
+    methodName: 'Doorstep Delivery (Akwa Ibom)',
+    summaryLabel: 'Delivery (Akwa Ibom Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Imo (Owerri)': {
+    methodName: 'Doorstep Delivery (Imo)',
+    summaryLabel: 'Delivery (Imo Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Cross River (Calabar)': {
+    methodName: 'Doorstep Delivery (Cross River)',
+    summaryLabel: 'Delivery (Cross River Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Kwara (Ilorin)': {
+    methodName: 'Doorstep Delivery (Kwara)',
+    summaryLabel: 'Delivery (Kwara Doorstep)',
+    fee: 4500,
+    displayFee: '₦4,500',
+  },
+  'Osun (Osogbo)': {
+    methodName: 'Doorstep Delivery (Osun)',
+    summaryLabel: 'Delivery (Osun Doorstep)',
+    fee: 4000,
+    displayFee: '₦4,000',
+  },
+  'Ondo (Akure)': {
+    methodName: 'Doorstep Delivery (Ondo)',
+    summaryLabel: 'Delivery (Ondo Doorstep)',
+    fee: 4000,
+    displayFee: '₦4,000',
+  },
+  'Ekiti (Ado-Ekiti)': {
+    methodName: 'Doorstep Delivery (Ekiti)',
+    summaryLabel: 'Delivery (Ekiti Doorstep)',
+    fee: 4500,
+    displayFee: '₦4,500',
+  },
+  'Abia (Umuahia / Aba)': {
+    methodName: 'Doorstep Delivery (Abia)',
+    summaryLabel: 'Delivery (Abia Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Plateau (Jos)': {
+    methodName: 'Doorstep Delivery (Plateau)',
+    summaryLabel: 'Delivery (Plateau Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Benue (Makurdi)': {
+    methodName: 'Doorstep Delivery (Benue)',
+    summaryLabel: 'Delivery (Benue Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Kogi (Lokoja)': {
+    methodName: 'Doorstep Delivery (Kogi)',
+    summaryLabel: 'Delivery (Kogi Doorstep)',
+    fee: 4500,
+    displayFee: '₦4,500',
+  },
+  'Niger (Minna)': {
+    methodName: 'Doorstep Delivery (Niger)',
+    summaryLabel: 'Delivery (Niger Doorstep)',
+    fee: 4500,
+    displayFee: '₦4,500',
+  },
+  'Nasarawa (Lafia)': {
+    methodName: 'Doorstep Delivery (Nasarawa)',
+    summaryLabel: 'Delivery (Nasarawa Doorstep)',
+    fee: 4500,
+    displayFee: '₦4,500',
+  },
+  'Bayelsa (Yenagoa)': {
+    methodName: 'Doorstep Delivery (Bayelsa)',
+    summaryLabel: 'Delivery (Bayelsa Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Ebonyi (Abakaliki)': {
+    methodName: 'Doorstep Delivery (Ebonyi)',
+    summaryLabel: 'Delivery (Ebonyi Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  Bauchi: {
+    methodName: 'Doorstep Delivery (Bauchi)',
+    summaryLabel: 'Delivery (Bauchi Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Borno (Maiduguri)': {
+    methodName: 'Doorstep Delivery (Borno)',
+    summaryLabel: 'Delivery (Borno Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Adamawa (Yola)': {
+    methodName: 'Doorstep Delivery (Adamawa)',
+    summaryLabel: 'Delivery (Adamawa Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  Gombe: {
+    methodName: 'Doorstep Delivery (Gombe)',
+    summaryLabel: 'Delivery (Gombe Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Jigawa (Dutse)': {
+    methodName: 'Doorstep Delivery (Jigawa)',
+    summaryLabel: 'Delivery (Jigawa Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  Katsina: {
+    methodName: 'Doorstep Delivery (Katsina)',
+    summaryLabel: 'Delivery (Katsina Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Kebbi (Birnin Kebbi)': {
+    methodName: 'Doorstep Delivery (Kebbi)',
+    summaryLabel: 'Delivery (Kebbi Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  Sokoto: {
+    methodName: 'Doorstep Delivery (Sokoto)',
+    summaryLabel: 'Delivery (Sokoto Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Taraba (Jalingo)': {
+    methodName: 'Doorstep Delivery (Taraba)',
+    summaryLabel: 'Delivery (Taraba Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Yobe (Damaturu)': {
+    methodName: 'Doorstep Delivery (Yobe)',
+    summaryLabel: 'Delivery (Yobe Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+  'Zamfara (Gusau)': {
+    methodName: 'Doorstep Delivery (Zamfara)',
+    summaryLabel: 'Delivery (Zamfara Doorstep)',
+    fee: 5000,
+    displayFee: '₦5,000',
+  },
+};
+
+export const getDeliveryConfig = (selectedState: string): DeliveryStateConfig => {
+  if (!selectedState || selectedState === 'Lagos') {
+    return STATE_DELIVERY_PRICING['Lagos'];
+  }
+  if (STATE_DELIVERY_PRICING[selectedState]) {
+    return STATE_DELIVERY_PRICING[selectedState];
+  }
+  const cleanName = selectedState.split('(')[0].replace(' - ', ' ').trim();
+  if (cleanName.toLowerCase().includes('abuja')) {
+    return STATE_DELIVERY_PRICING['FCT - Abuja'];
+  }
+  return {
+    methodName: `Doorstep Delivery (${cleanName})`,
+    summaryLabel: `Delivery (${cleanName} Doorstep)`,
+    fee: 5000,
+    displayFee: '₦5,000',
+  };
+};

@@ -15,6 +15,7 @@ import {
   Copy,
   Check,
   AlertCircle,
+  MapPin,
 } from 'lucide-react';
 import {
   Product,
@@ -23,9 +24,16 @@ import {
   FORMSPREE_ENDPOINT,
   formatNaira,
   calculateProgressivePricing,
+  getDeliveryConfig,
 } from '../data/products';
 import { ProductVisual } from './ProductVisual';
 import { validateOrderForm, FormErrors } from '../utils/validation';
+
+export type DeliveryMethodType =
+  | 'Direct Doorstep Delivery (Lagos)'
+  | 'Motor park pick-up (FREE)'
+  | 'Doorstep delivery (+₦5,000)'
+  | string;
 
 export interface CartItem {
   product: Product;
@@ -41,6 +49,8 @@ export interface OrderRecord {
   address: string;
   state: string;
   notes: string;
+  deliveryMethod?: DeliveryMethodType;
+  deliveryFee?: number;
   paymentMethod: 'Pay on Delivery' | 'Bank Transfer' | 'Online Payment';
   items: CartItem[];
   totalAmount: number;
@@ -87,6 +97,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<
     'Pay on Delivery' | 'Bank Transfer' | 'Online Payment'
   >('Pay on Delivery');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethodType>('Direct Doorstep Delivery (Lagos)');
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,6 +118,9 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
     0
   );
   const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const currentDelivery = getDeliveryConfig(state);
+  const deliveryFee = currentDelivery.fee;
+  const finalTotal = subtotal + deliveryFee;
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,9 +163,11 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
       address: address.trim(),
       state,
       notes: notes.trim(),
+      deliveryMethod: currentDelivery.methodName,
+      deliveryFee,
       paymentMethod: 'Pay on Delivery',
       items: [...cart],
-      totalAmount: subtotal,
+      totalAmount: finalTotal,
     };
 
     try {
@@ -168,6 +184,8 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
           phone: newOrder.phone,
           whatsapp: newOrder.whatsapp,
           state: newOrder.state,
+          deliveryMethod,
+          deliveryFee: deliveryFee === 0 ? 'FREE (₦0)' : formatNaira(deliveryFee),
           deliveryAddress: newOrder.address,
           orderNotes: newOrder.notes || 'None',
           paymentMethod: 'Pay on Delivery',
@@ -175,7 +193,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
             .map((i) => `${i.quantity}x ${i.product.name}`)
             .join(', '),
           progressiveDiscount: formatNaira(totalSavings),
-          totalPayable: formatNaira(subtotal),
+          totalPayable: formatNaira(finalTotal),
         }),
       });
     } catch {
@@ -198,7 +216,11 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
           )}`
       )
       .join('\n');
-    const text = `Hello GOODLUXE, I just placed Order *${order.orderId}* on your website.\n\n*Items:*\n${itemLines}\n\n*Total:* ${formatNaira(
+    const text = `Hello GOODLUXE, I just placed Order *${order.orderId}* on your website.\n\n*Items:*\n${itemLines}\n\n*Delivery Method:* ${
+      order.deliveryMethod || 'Motor park pick-up (FREE)'
+    }\n*Delivery Fee:* ${
+      order.deliveryFee ? formatNaira(order.deliveryFee) : 'FREE (₦0)'
+    }\n*Total Payable:* ${formatNaira(
       order.totalAmount
     )}\n*Payment Option:* ${order.paymentMethod}\n*Customer:* ${order.customerName}\n*Phone:* ${
       order.phone
@@ -290,9 +312,27 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                   ))}
                 </div>
 
+                <div className="pt-3 border-t border-slate-200 flex justify-between items-center text-xs">
+                  <span className="text-slate-500 uppercase tracking-wider font-semibold">
+                    Delivery Method
+                  </span>
+                  <span className="font-bold text-slate-800">
+                    {confirmedOrder.deliveryMethod || 'Motor park pick-up (FREE)'}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 uppercase tracking-wider font-semibold">
+                    Delivery Fee
+                  </span>
+                  <span className={`font-mono-num font-bold ${confirmedOrder.deliveryFee ? 'text-[#E51A24]' : 'text-emerald-700'}`}>
+                    {confirmedOrder.deliveryFee ? formatNaira(confirmedOrder.deliveryFee) : 'FREE (₦0)'}
+                  </span>
+                </div>
+
                 <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">
                   <span className="text-sm font-semibold text-slate-800">
-                    Total Payable (Free Delivery)
+                    Total Payable on Delivery
                   </span>
                   <span className="text-xl font-black font-mono-num text-[#E51A24]">
                     {formatNaira(confirmedOrder.totalAmount)}
@@ -498,7 +538,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                   Payment Mode
                 </label>
-                <div className="flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50">
+                <div className="flex items-center justify-between p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50">
                   <div className="flex items-center gap-3">
                     <input
                       type="radio"
@@ -520,7 +560,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* Customer Delivery Fields (Moderate, Comfortable Input Boxes) */}
+              {/* Customer Delivery Fields */}
               <div className="space-y-3 text-[#0A1C36]">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -576,62 +616,76 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-                  <div className="sm:col-span-1">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      State *
-                    </label>
-                    <select
-                      value={state}
-                      onChange={(e) => {
-                        setState(e.target.value);
-                        if (fieldErrors.state) setFieldErrors((p) => ({ ...p, state: undefined }));
-                      }}
-                      className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 text-sm focus:outline-none ${
-                        fieldErrors.state
-                          ? 'border-red-500 bg-red-50/30 focus:border-red-600'
-                          : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
-                      }`}
-                    >
-                      {NIGERIAN_STATES.map((st) => (
-                        <option key={st} value={st} className="bg-white text-slate-900">
-                          {st}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldErrors.state && (
-                      <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>{fieldErrors.state}</span>
-                      </p>
-                    )}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Delivery State *
+                  </label>
+                  <select
+                    value={state}
+                    onChange={(e) => {
+                      setState(e.target.value);
+                      if (fieldErrors.state) setFieldErrors((p) => ({ ...p, state: undefined }));
+                    }}
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 text-sm focus:outline-none ${
+                      fieldErrors.state
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
+                  >
+                    {NIGERIAN_STATES.map((st) => (
+                      <option key={st} value={st} className="bg-white text-slate-900">
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors.state && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.state}</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* 1. DELIVERY METHOD — Field labeled Delivery Method directly below Delivery State dropdown */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Delivery Method
+                  </label>
+                  <div className="w-full min-h-[52px] sm:min-h-[56px] px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-[#ECFDF5] border border-[#6EE7B7] flex items-center justify-between gap-3 transition-all shadow-xs">
+                    <span className="font-bold text-[#065F46] text-xs sm:text-sm tracking-tight text-left min-w-0 flex-1">
+                      {currentDelivery.methodName}
+                    </span>
+                    <span className="font-bold font-mono-num text-[#047857] text-xs sm:text-sm shrink-0 text-right">
+                      {currentDelivery.displayFee}
+                    </span>
                   </div>
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Detailed Delivery Address *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={address}
-                      onChange={(e) => {
-                        setAddress(e.target.value);
-                        if (fieldErrors.address) setFieldErrors((p) => ({ ...p, address: undefined }));
-                      }}
-                      placeholder="House No, Street Name, Estate or Bus-stop"
-                      className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
-                        fieldErrors.address
-                          ? 'border-red-500 bg-red-50/30 focus:border-red-600'
-                          : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
-                      }`}
-                    />
-                    {fieldErrors.address && (
-                      <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>{fieldErrors.address}</span>
-                      </p>
-                    )}
-                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Street Address / Bus Stop / Area Landmark *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={address}
+                    onChange={(e) => {
+                      setAddress(e.target.value);
+                      if (fieldErrors.address) setFieldErrors((p) => ({ ...p, address: undefined }));
+                    }}
+                    placeholder="House No, Street Name, Bus-stop / Area Landmark"
+                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                      fieldErrors.address
+                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                    }`}
+                  />
+                  {fieldErrors.address && (
+                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{fieldErrors.address}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -656,8 +710,10 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
           <div className="p-6 border-t border-slate-200 bg-[#F8FAFC] space-y-3">
             <div className="space-y-1 text-sm">
               <div className="flex justify-between text-slate-600">
-                <span>Delivery (Nationwide Express)</span>
-                <span className="font-semibold text-emerald-700">FREE</span>
+                <span>{currentDelivery.summaryLabel}</span>
+                <span className={`font-semibold ${currentDelivery.fee > 0 ? 'text-[#E51A24]' : 'text-emerald-700'}`}>
+                  {currentDelivery.displayFee}
+                </span>
               </div>
               {totalSavings > 0 && (
                 <div className="flex justify-between text-xs text-emerald-700 font-semibold">
@@ -668,7 +724,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               <div className="flex justify-between items-baseline pt-2 border-t border-slate-200">
                 <span className="text-base font-semibold text-slate-800">Total Payable</span>
                 <span className="text-2xl font-black font-mono-num text-[#E51A24]">
-                  {formatNaira(subtotal)}
+                  {formatNaira(finalTotal)}
                 </span>
               </div>
             </div>
@@ -690,7 +746,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               >
                 {isSubmitting
                   ? 'SUBMITTING ORDER...'
-                  : `PLACE ORDER — ${formatNaira(subtotal)} (PAY ON DELIVERY)`}
+                  : `PLACE ORDER — ${formatNaira(finalTotal)} (PAY ON DELIVERY)`}
               </button>
             )}
 

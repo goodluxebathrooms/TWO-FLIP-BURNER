@@ -25,7 +25,7 @@ const NOTIFICATIONS: OrderNotificationItem[] = [
     units: '2 UNITS',
     item: '2 BURNER COOKTOP',
     timeAgo: '4 mins ago',
-    deliveryMethod: 'Pay on Delivery',
+    deliveryMethod: 'Doorstep Delivery (+₦5,000)',
   },
   {
     id: 'ord-2',
@@ -34,7 +34,7 @@ const NOTIFICATIONS: OrderNotificationItem[] = [
     units: '1 UNIT',
     item: '2 BURNER COOKTOP',
     timeAgo: '12 mins ago',
-    deliveryMethod: 'Free Express Dispatch',
+    deliveryMethod: 'Motor Park Pick-up (FREE)',
   },
   {
     id: 'ord-3',
@@ -43,7 +43,7 @@ const NOTIFICATIONS: OrderNotificationItem[] = [
     units: '2 UNITS',
     item: '2 BURNER COOKTOP',
     timeAgo: '21 mins ago',
-    deliveryMethod: 'Pay on Delivery',
+    deliveryMethod: 'Doorstep Delivery (+₦5,000)',
   },
   {
     id: 'ord-4',
@@ -52,7 +52,7 @@ const NOTIFICATIONS: OrderNotificationItem[] = [
     units: '1 UNIT',
     item: '2 BURNER COOKTOP',
     timeAgo: '28 mins ago',
-    deliveryMethod: 'Pay on Delivery',
+    deliveryMethod: 'Motor Park Pick-up (FREE)',
   },
   {
     id: 'ord-5',
@@ -61,7 +61,7 @@ const NOTIFICATIONS: OrderNotificationItem[] = [
     units: '3 UNITS',
     item: '2 BURNER COOKTOP',
     timeAgo: '39 mins ago',
-    deliveryMethod: 'Free Express Dispatch',
+    deliveryMethod: 'Doorstep Delivery (+₦5,000)',
   },
   {
     id: 'ord-6',
@@ -70,7 +70,7 @@ const NOTIFICATIONS: OrderNotificationItem[] = [
     units: '2 UNITS',
     item: '2 BURNER COOKTOP',
     timeAgo: '47 mins ago',
-    deliveryMethod: 'Pay on Delivery',
+    deliveryMethod: 'Motor Park Pick-up (FREE)',
   },
 ];
 

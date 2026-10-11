@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Truck,
   AlertCircle,
+  MapPin,
 } from 'lucide-react';
 import {
   Product,
@@ -20,8 +21,9 @@ import {
   FORMSPREE_ENDPOINT,
   formatNaira,
   calculateProgressivePricing,
+  getDeliveryConfig,
 } from '../data/products';
-import { OrderRecord } from './CartCheckoutModal';
+import { OrderRecord, DeliveryMethodType } from './CartCheckoutModal';
 import { validateOrderForm, FormErrors } from '../utils/validation';
 
 interface QuickOrderPopupModalProps {
@@ -47,6 +49,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
   const [state, setState] = useState('Lagos');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethodType>('Direct Doorstep Delivery (Lagos)');
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +66,9 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
   if (!isOpen) return null;
 
   const pricing = calculateProgressivePricing(product.currentPrice, quantity);
+  const currentDelivery = getDeliveryConfig(state);
+  const deliveryFee = currentDelivery.fee;
+  const finalTotal = pricing.finalTotal + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,9 +111,11 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
       address: address.trim(),
       state,
       notes: notes.trim(),
+      deliveryMethod: currentDelivery.methodName,
+      deliveryFee,
       paymentMethod: 'Pay on Delivery',
       items: [{ product, quantity }],
-      totalAmount: pricing.finalTotal,
+      totalAmount: finalTotal,
     };
 
     try {
@@ -122,8 +130,10 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
           orderId: generatedId,
           productName: product.name,
           quantity,
+          deliveryMethod: currentDelivery.methodName,
+          deliveryFee: deliveryFee === 0 ? 'FREE (₦0)' : formatNaira(deliveryFee),
           progressiveDiscount: formatNaira(pricing.progressiveDiscount),
-          totalPayable: formatNaira(pricing.finalTotal),
+          totalPayable: formatNaira(finalTotal),
           paymentMethod: 'Pay on Delivery',
           fullName: newOrder.customerName,
           phone: newOrder.phone,
@@ -146,7 +156,11 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
   const getWhatsAppReceiptUrl = (order: OrderRecord) => {
     const text = `Hello GOODLUXE, I just placed Order *${order.orderId}*.\n\n*Product:* ${
       product.name
-    }\n*Quantity:* ${quantity}\n*Total Payable (Pay on Delivery):* ${formatNaira(
+    }\n*Quantity:* ${quantity}\n*Delivery Method:* ${
+      order.deliveryMethod || currentDelivery.methodName
+    }\n*Delivery Fee:* ${
+      order.deliveryFee ? formatNaira(order.deliveryFee) : 'FREE (₦0)'
+    }\n*Total Payable (Pay on Delivery):* ${formatNaira(
       order.totalAmount
     )}\n*Customer:* ${order.customerName}\n*Phone:* ${
       order.phone
@@ -235,6 +249,18 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                 <div className="flex justify-between">
                   <span className="text-slate-500">Payment Mode</span>
                   <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Pay on Delivery</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Delivery Method</span>
+                  <span className="font-bold text-slate-900">
+                    {confirmedOrder.deliveryMethod || currentDelivery.methodName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Delivery Fee</span>
+                  <span className={`font-mono-num font-bold ${confirmedOrder.deliveryFee ? 'text-[#E51A24]' : 'text-emerald-700'}`}>
+                    {confirmedOrder.deliveryFee ? formatNaira(confirmedOrder.deliveryFee) : 'FREE (₦0)'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Delivery Address</span>
@@ -402,67 +428,69 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                 <Banknote className="w-4 h-4 text-emerald-600 shrink-0" />
               </div>
 
-              {/* Customer Delivery Inputs — Moderate Balanced Boxes */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-[#0A1C36]">
-                <div className="sm:col-span-1">
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    required
-                    value={fullName}
-                    onChange={(e) => {
-                      setFullName(e.target.value);
-                      if (fieldErrors.fullName) setFieldErrors((p) => ({ ...p, fullName: undefined }));
-                    }}
-                    placeholder="e.g. Emmanuel Collins"
-                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
-                      fieldErrors.fullName
-                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
-                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
-                    }`}
-                  />
-                  {fieldErrors.fullName && (
-                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{fieldErrors.fullName}</span>
-                    </p>
-                  )}
+              {/* Customer Delivery Inputs */}
+              <div className="space-y-3 text-[#0A1C36]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      required
+                      value={fullName}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        if (fieldErrors.fullName) setFieldErrors((p) => ({ ...p, fullName: undefined }));
+                      }}
+                      placeholder="e.g. Emmanuel Collins"
+                      className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                        fieldErrors.fullName
+                          ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                          : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                      }`}
+                    />
+                    {fieldErrors.fullName && (
+                      <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{fieldErrors.fullName}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Phone Number (11 Digits) *
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      required
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+                      }}
+                      placeholder="e.g. 0803 123 4567"
+                      className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
+                        fieldErrors.phone
+                          ? 'border-red-500 bg-red-50/30 focus:border-red-600'
+                          : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
+                      }`}
+                    />
+                    {fieldErrors.phone && (
+                      <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{fieldErrors.phone}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="sm:col-span-1">
+                <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Phone Number (11 Digits) *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
-                    }}
-                    placeholder="e.g. 0803 123 4567"
-                    className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
-                      fieldErrors.phone
-                        ? 'border-red-500 bg-red-50/30 focus:border-red-600'
-                        : 'border-slate-300 bg-[#F8FAFC] focus:border-[#E51A24]'
-                    }`}
-                  />
-                  {fieldErrors.phone && (
-                    <p className="mt-1 text-[11px] text-red-600 font-bold flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{fieldErrors.phone}</span>
-                    </p>
-                  )}
-                </div>
-
-                <div className="sm:col-span-1">
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    State *
+                    Delivery State *
                   </label>
                   <select
                     name="state"
@@ -491,9 +519,24 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                   )}
                 </div>
 
-                <div className="sm:col-span-1">
+                {/* 1. DELIVERY METHOD — Field labeled Delivery Method directly below Delivery State dropdown */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Delivery Method
+                  </label>
+                  <div className="w-full min-h-[52px] sm:min-h-[56px] px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-[#ECFDF5] border border-[#6EE7B7] flex items-center justify-between gap-3 transition-all shadow-xs">
+                    <span className="font-bold text-[#065F46] text-xs sm:text-sm tracking-tight text-left min-w-0 flex-1">
+                      {currentDelivery.methodName}
+                    </span>
+                    <span className="font-bold font-mono-num text-[#047857] text-xs sm:text-sm shrink-0 text-right">
+                      {currentDelivery.displayFee}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Delivery Address *
+                    Street Address / Bus Stop / Area Landmark *
                   </label>
                   <input
                     type="text"
@@ -504,7 +547,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                       setAddress(e.target.value);
                       if (fieldErrors.address) setFieldErrors((p) => ({ ...p, address: undefined }));
                     }}
-                    placeholder="House No, Street, Bus-stop"
+                    placeholder="House No, Street Name, Bus-stop / Area Landmark"
                     className={`w-full px-3 py-2 sm:py-2.5 rounded-lg border text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none transition-colors ${
                       fieldErrors.address
                         ? 'border-red-500 bg-red-50/30 focus:border-red-600'
@@ -519,7 +562,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                   )}
                 </div>
 
-                <div className="sm:col-span-2">
+                <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Order Notes (Optional)
                   </label>
@@ -531,6 +574,43 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                     placeholder="Preferred delivery time or landmark..."
                     className="w-full px-3 py-2 sm:py-2.5 rounded-lg border border-slate-300 bg-[#F8FAFC] text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:border-[#E51A24]"
                   />
+                </div>
+
+                {/* 2. ORDER SUBTOTAL AND TOTAL PAYABLE CARD — Below Street Address field */}
+                <div className="w-full rounded-2xl sm:rounded-[24px] bg-[#0D1830] p-4 sm:p-5 text-white shadow-xl space-y-2.5 sm:space-y-3">
+                  <div className="flex items-center justify-between gap-3 text-xs sm:text-[13px]">
+                    <span className="text-slate-300 font-medium min-w-0 flex-1">
+                      Selected Products Subtotal
+                    </span>
+                    <span className="font-semibold font-mono-num text-white text-xs sm:text-sm shrink-0 text-right">
+                      {formatNaira(pricing.finalTotal)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 text-xs sm:text-[13px]">
+                    <span className="text-slate-300 font-medium min-w-0 flex-1">
+                      {currentDelivery.summaryLabel}
+                    </span>
+                    <span className="font-bold font-mono-num text-[#34D399] text-xs sm:text-sm shrink-0 text-right">
+                      {currentDelivery.displayFee}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-slate-700/60 my-2" />
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs sm:text-sm font-bold text-white min-w-0 flex-1">
+                      Total Payable on Delivery
+                    </span>
+                    <span className="text-xl sm:text-2xl font-black font-mono-num text-[#3B9BFF] tracking-tight shrink-0 text-right">
+                      {formatNaira(finalTotal)}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-slate-400 font-medium text-center">
+                    <ShieldCheck className="w-4 h-4 text-[#10B981] stroke-[2] shrink-0" />
+                    <span>Zero advance payment required • Inspect before paying</span>
+                  </div>
                 </div>
               </div>
 
@@ -544,7 +624,7 @@ export const QuickOrderPopupModal: React.FC<QuickOrderPopupModalProps> = ({
                 ) : (
                   <>
                     <Zap className="w-3.5 h-3.5 text-[#FFE500] fill-[#FFE500] shrink-0" />
-                    <span>PLACE ORDER — {formatNaira(pricing.finalTotal)} (PAY ON DELIVERY)</span>
+                    <span>PLACE ORDER — {formatNaira(finalTotal)} (PAY ON DELIVERY)</span>
                   </>
                 )}
               </button>
