@@ -64,7 +64,19 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_PRODUCT_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.id) return parsed;
+        if (parsed && parsed.id) {
+          if (parsed.currentPrice === 160000) {
+            parsed.currentPrice = 170000;
+            parsed.originalPrice = 200000;
+            parsed.discount = 15;
+            try {
+              localStorage.setItem(STORAGE_PRODUCT_KEY, JSON.stringify(parsed));
+            } catch {
+              // ignore
+            }
+          }
+          return parsed;
+        }
       }
     } catch {
       // Fallback to default single product
@@ -83,7 +95,18 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_CART_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((item) => ({
+            ...item,
+            product: {
+              ...item.product,
+              currentPrice: item.product.currentPrice === 160000 ? 170000 : item.product.currentPrice,
+            },
+          }));
+        }
+      }
     } catch {
       // ignore
     }

@@ -21,7 +21,7 @@ export const AdminProductModal: React.FC<AdminProductModalProps> = ({
   const currentProduct = products[0];
 
   const [name, setName] = useState('');
-  const [currentPrice, setCurrentPrice] = useState(160000);
+  const [currentPrice, setCurrentPrice] = useState(170000);
   const [originalPrice, setOriginalPrice] = useState(250000);
   const [stockCount, setStockCount] = useState(14);
   const [shortDescription, setShortDescription] = useState('');
