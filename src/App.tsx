@@ -52,6 +52,7 @@ import { QuickOrderPopupModal } from './components/QuickOrderPopupModal';
 import { StickyPromoBar } from './components/StickyPromoBar';
 import { FloatingOrderNotification } from './components/FloatingOrderNotification';
 import { validateOrderForm, FormErrors } from './utils/validation';
+import { trackPurchaseEvent, trackStandardEvent } from './utils/pixel';
 
 const STORAGE_PRODUCT_KEY = 'goodluxe_single_product_v6';
 const STORAGE_CART_KEY = 'goodluxe_single_cart_v1';
@@ -65,10 +66,10 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.id) {
-          if (parsed.currentPrice === 160000) {
-            parsed.currentPrice = 170000;
-            parsed.originalPrice = 200000;
-            parsed.discount = 15;
+          if (parsed.currentPrice === 170000) {
+            parsed.currentPrice = 160000;
+            parsed.originalPrice = 170000;
+            parsed.discount = 6;
             try {
               localStorage.setItem(STORAGE_PRODUCT_KEY, JSON.stringify(parsed));
             } catch {
@@ -102,7 +103,7 @@ export default function App() {
             ...item,
             product: {
               ...item.product,
-              currentPrice: item.product.currentPrice === 160000 ? 170000 : item.product.currentPrice,
+              currentPrice: item.product.currentPrice === 170000 ? 160000 : item.product.currentPrice,
             },
           }));
         }
@@ -282,68 +283,22 @@ export default function App() {
     }
   };
 
-  // Cart & Buy Actions Tracking (Meta Pixel & TikTok Pixel)
-  const trackPixelEvent = (eventName: string, params?: Record<string, unknown>) => {
-    const win = window as unknown as {
-      fbq?: (...args: unknown[]) => void;
-      ttq?: { track?: (event: string, data?: Record<string, unknown>) => void };
-    };
-
-    // Meta (Facebook) Pixel
-    if (typeof win.fbq === 'function') {
-      win.fbq('track', eventName, params);
-    }
-
-    // TikTok Pixel
-    if (win.ttq && typeof win.ttq.track === 'function') {
-      const ttEventMap: Record<string, string> = {
-        AddToCart: 'AddToCart',
-        InitiateCheckout: 'InitiateCheckout',
-        Purchase: 'PlaceAnOrder',
-        ViewContent: 'ViewContent',
-      };
-      const ttEvent = ttEventMap[eventName] || eventName;
-      win.ttq.track(ttEvent, {
-        contents: [
-          {
-            content_id: product.id,
-            content_name: product.name,
-            quantity: params?.num_items || quantity,
-            price: product.currentPrice,
-          },
-        ],
-        value: params?.value,
-        currency: (params?.currency as string) || 'NGN',
-      });
-      if (eventName === 'Purchase') {
-        win.ttq.track('CompletePayment', {
-          value: params?.value,
-          currency: (params?.currency as string) || 'NGN',
-        });
-      }
-    }
-  };
-
   const handleAddToCart = (qty = quantity) => {
     setCart([{ product, quantity: qty }]);
-    trackPixelEvent('AddToCart', {
-      content_name: product.name,
-      content_ids: [product.id],
-      content_type: 'product',
+    trackStandardEvent('AddToCart', {
+      product,
+      quantity: qty,
       value: calculateProgressivePricing(product.currentPrice, qty).finalTotal,
-      currency: 'NGN',
     });
     showToast(`Added ${qty} × ${product.name} to your bag`);
   };
 
   const handleBuyNow = (qty = quantity) => {
     setQuantity(qty);
-    trackPixelEvent('InitiateCheckout', {
-      content_name: product.name,
-      content_ids: [product.id],
-      num_items: qty,
+    trackStandardEvent('InitiateCheckout', {
+      product,
+      quantity: qty,
       value: calculateProgressivePricing(product.currentPrice, qty).finalTotal,
-      currency: 'NGN',
     });
     setQuickOrderPopupOpen(true);
   };
@@ -370,12 +325,10 @@ export default function App() {
     } catch {
       // ignore
     }
-    trackPixelEvent('Purchase', {
-      content_name: product.name,
-      content_ids: [product.id],
-      content_type: 'product',
-      value: newOrder.totalAmount,
-      currency: 'NGN',
+    // Track Purchase on TikTok Pixel (CompletePayment & PlaceAnOrder), Meta Pixel, and Conversion API
+    trackPurchaseEvent({
+      order: newOrder,
+      product,
     });
     showToast(`Order ${newOrder.orderId} confirmed! Free nationwide dispatch initiated.`);
   };

@@ -102,15 +102,15 @@ export const PROGRESSIVE_DISCOUNT_STEP = 5000;
 
 export const calculateProgressivePricing = (basePromoPrice: number, quantity: number) => {
   const qty = Math.max(1, quantity);
-  // Base unit price = ₦170,000 (Save ₦30,000 off ₦200,000 normal price)
-  // 2 units: ₦5,000 off each -> ₦165,000/unit (Total: ₦330,000, Save ₦10,000 off base)
-  // 3+ units: ₦10,000 off each -> ₦160,000/unit (Total for 3: ₦480,000, Save ₦30,000 off base)
+  // Base unit price = ₦160,000 (Save ₦10,000 off ₦170,000 normal price)
+  // 2 units: ₦5,000 off each -> ₦155,000/unit (Total: ₦310,000, Save ₦10,000 off base)
+  // 3+ units: ₦10,000 off each -> ₦150,000/unit (Total for 3: ₦450,000, Save ₦30,000 off base)
   const discountPerUnit = qty === 1 ? 0 : qty === 2 ? 5000 : 10000;
   const unitPrice = Math.max(0, basePromoPrice - discountPerUnit);
   const finalTotal = unitPrice * qty;
   const baseTotal = basePromoPrice * qty;
-  const progressiveDiscount = qty === 1 ? 30000 : discountPerUnit * qty;
-  const normalTotal = qty === 1 ? basePromoPrice + 30000 : baseTotal;
+  const progressiveDiscount = qty === 1 ? 10000 : discountPerUnit * qty;
+  const normalTotal = qty === 1 ? basePromoPrice + 10000 : baseTotal;
   const discountPercent = Math.max(1, Math.round((progressiveDiscount / normalTotal) * 100));
 
   return {
@@ -144,9 +144,9 @@ export const SINGLE_PRODUCT: Product = {
     '/images/products/H2322db9fd53f4a01bd3216213a472dcfN.png',
     '/images/products/Hf86fe9d05ba94278b5abeb9daad2744dv.jpg',
   ],
-  currentPrice: 170000,
-  originalPrice: 200000,
-  discount: 15,
+  currentPrice: 160000,
+  originalPrice: 170000,
+  discount: 6,
   stockStatus: 'In Stock',
   stockCount: 14,
   rating: 4.9,
